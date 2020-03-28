@@ -7,7 +7,6 @@ public class PlayerStats : MonoBehaviour
     public int playerHeartCount = 3;
     public int currentHeartcount;
 
-
     public bool isDead;
 
 
@@ -30,7 +29,6 @@ public class PlayerStats : MonoBehaviour
     }
 
     public void DamagePlayer()
-
     {
         PlayerController.instance.HurtAnim();
         UIManager.instance.UpdateHealthUI();
@@ -43,7 +41,4 @@ public class PlayerStats : MonoBehaviour
         isDead = true;
         UIManager.instance.DeathUI();
     }
-
-
-
 }

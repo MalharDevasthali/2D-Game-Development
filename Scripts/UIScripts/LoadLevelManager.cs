@@ -7,27 +7,55 @@ using UnityEngine.SceneManagement;
 public class LoadLevelManager : MonoBehaviour
 {
 
-    public List<Button> LevelList;
+
+    public List<Level> LevelList;
+    private int currentLevel;
+    public GameObject LevelHolder;
     //public Sprite _highlightedSprite;
 
     public static LoadLevelManager instance;
     private void Awake()
     {
+        DontDestroyOnLoad(this.gameObject);
+
         if (instance != null)
             Destroy(gameObject);
         else
             instance = this;
     }
+    public void LevelCheck()
+    {
+        if (LevelList[GetCurrentLevelIndex()].isLevelComplete())
+        {
+            UnlockNextLevel();
+            // LoadNextLevel();
+            UIManager.instance.UpdateLevelCompleteUI();
+        }
+        else
+        {
+            UIManager.instance.UpdateLevelIncompleteUI();
+        }
+    }
 
-    public void UnlockLevel(int level)
+    private int GetCurrentLevelIndex()
     {
-        SpriteState st = new SpriteState();
-        st.highlightedSprite = null;
-        LevelList[level - 1].spriteState = st;
-        LevelList[level - 1].onClick.AddListener(delegate { LoadLevel(level); });
+        currentLevel = SceneManager.GetActiveScene().buildIndex;
+        return currentLevel - 1;
     }
-    private void LoadLevel(int level)
+
+    private void UnlockNextLevel()
     {
-        SceneManager.LoadScene(level);
+        LevelList[GetCurrentLevelIndex()].gameObject.GetComponent<Button>().enabled = true;
     }
+    public void LoadNextLevel()
+    {
+        SceneManager.LoadScene(GetCurrentLevelIndex() + 2);
+    }
+    //calling from onClick event via Inspector
+    public void LoadLevel(int index)
+    {
+        LevelHolder.SetActive(false);
+        SceneManager.LoadScene(index);
+    }
+
 }

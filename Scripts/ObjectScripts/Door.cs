@@ -6,9 +6,8 @@ public class Door : MonoBehaviour
 {
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
-        {
-            UIManager.instance.Level1CompleteCheck();
-        }
+        if (other.GetComponent<PlayerController>() != null)
+            LoadLevelManager.instance.LevelCheck();
+
     }
 }

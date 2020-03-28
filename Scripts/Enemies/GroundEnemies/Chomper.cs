@@ -7,8 +7,7 @@ public class Chomper : MonoBehaviour
 
     [Header("Chomper Health")]
     public float maxHealth;
-    [HideInInspector]
-    public float currenthealth;
+    [HideInInspector] public float currenthealth;
 
     [Header("Chomper Movement")]
     public float walkSpeed;
@@ -19,20 +18,19 @@ public class Chomper : MonoBehaviour
     [Header("Unity Essentials")]
     public Animator animator;
     public Transform LeftBound, RightBound;
-    IEnumerator AttackCo;
-
-    float localScaleX;
+    private Coroutine AttackCo;
+    private float localScaleX;
 
     [Header("Attack Parameters")]
     public float attackDistance;
     public float attackCoolDown;
     public bool isPlayerDetected = false;
-    bool inAttack;
+    private bool inAttack;
 
 
     private void Start()
     {
-        animator.SetBool("isWalking", true);
+        SetState("isWalking", true, States.walking);
         currenthealth = maxHealth;
     }
 
@@ -41,12 +39,8 @@ public class Chomper : MonoBehaviour
         coolDown, running, walking, attacking, dead,
     }
 
-
-
     private void Update()
     {
-
-
         if (shouldFlip())
             Flip();
 
@@ -56,18 +50,18 @@ public class Chomper : MonoBehaviour
             Running();
 
         if (canAttack() && isPlayerDetected &&
-             !PlayerIsNotInFront())
+            PlayerIsInFront())
         {
-            AttackCo = Attack();
-            StartCoroutine(AttackCo);
+            AttackCo = StartCoroutine(Attack());
         }
     }
 
     private void Walking()
     {
         if (currentState != States.walking)
-            currentState = States.walking;
-
+        {
+            SetState("isWalking", true, States.walking);
+        }
         if (isFacingRight)
             transform.Translate(Vector2.right * walkSpeed * Time.deltaTime);
         else
@@ -80,8 +74,7 @@ public class Chomper : MonoBehaviour
 
         if (currentState != States.running)
         {
-            currentState = States.running;
-            animator.SetBool("isRunning", true);
+            SetState("isRunning", true, States.running);
         }
 
         if (isFacingRight)
@@ -93,7 +86,7 @@ public class Chomper : MonoBehaviour
 
     private bool canAttack()
     {
-        return playerIsInRange() && !inAttack;
+        return playerIsInRange() && AttackCo == null;
     }
 
     private bool playerIsInRange()
@@ -102,27 +95,39 @@ public class Chomper : MonoBehaviour
             return true;
         else
             return false;
-
     }
 
     private IEnumerator Attack()
     {
-        Debug.Log("In Attack Coroutine");
-        inAttack = true;
-        if (PlayerIsNotInFront())
+        if (!PlayerIsInFront())
             Flip();
-        animator.SetBool("isRunning", false);
-        animator.SetBool("isWalking", false);
-        currentState = States.coolDown;
-        animator.SetBool("inCoolDown", true);
+
+        Reset_Animations();
+        SetState("inCoolDown", true, States.coolDown);
+
         yield return new WaitForSeconds(attackCoolDown);
-        currentState = States.attacking;
-        animator.SetBool("inCoolDown", false);
+
+        Reset_Animations();
         animator.SetTrigger("Attack");
+        currentState = States.attacking;
         yield return new WaitForSeconds(0.4f);
         PlayerStats.instance.DamagePlayer();
         yield return new WaitForSeconds(0.5f);
-        inAttack = false;
+        StopAttack();
+    }
+
+    private void Reset_Animations()
+    {
+        animator.SetBool("isRunning", false);
+        animator.SetBool("isWalking", false);
+        animator.SetBool("inCoolDown", false);
+        animator.ResetTrigger("Attack");
+    }
+
+    public void SetState(string animatorVarName, bool value, States activeState)
+    {
+        animator.SetBool(animatorVarName, value);
+        currentState = activeState;
     }
 
     private bool shouldFlip()
@@ -152,15 +157,15 @@ public class Chomper : MonoBehaviour
             else
                 isPlayerDetected = false;
 
-            if (PlayerIsNotInFront())
+            if (!PlayerIsInFront())
                 Flip();
         }
     }
 
-    private bool PlayerIsNotInFront()
+    private bool PlayerIsInFront()
     {
-        return (PlayerController.instance.transform.position.x > transform.position.x && !isFacingRight)
-             || (PlayerController.instance.transform.position.x < transform.position.x && isFacingRight);
+        return (PlayerController.instance.transform.position.x > transform.position.x && isFacingRight)
+             || (PlayerController.instance.transform.position.x < transform.position.x && !isFacingRight);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -168,13 +173,17 @@ public class Chomper : MonoBehaviour
         if (other.gameObject.GetComponent<PlayerController>() != null)
         {
             isPlayerDetected = false;
-            if (AttackCo != null)
-                StopCoroutine(AttackCo);
-            animator.SetBool("isWalking", true);
-            animator.SetBool("isRunning", false);
-            animator.SetBool("inCoolDown", false);
-            animator.ResetTrigger("Attack");
-            inAttack = false;
+            StopAttack();
+            Reset_Animations();
+        }
+    }
+
+    private void StopAttack()
+    {
+        if (AttackCo != null)
+        {
+            StopCoroutine(AttackCo);
+            AttackCo = null;
         }
     }
 }
