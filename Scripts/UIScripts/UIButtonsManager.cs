@@ -8,11 +8,6 @@ using TMPro;
 public class UIButtonsManager : MonoBehaviour
 {
 
-    public void StartTheGame()
-    {
-        SceneManager.LoadScene("Level1");
-    }
-
     public void QuitTheGame()
     {
         Application.Quit();
@@ -24,11 +19,14 @@ public class UIButtonsManager : MonoBehaviour
     }
     public void OkButton()
     {
-        UIManager.instance.LevelCompletePanel.enabled = false;
+        UIManager.instance.LevelPanel.enabled = false;
+
         if (UIManager.instance.LevelCompleteUI.enabled)
             UIManager.instance.LevelCompleteUI.enabled = false;
         else if (UIManager.instance.LevelIncompleteUI.enabled)
-            UIManager.instance.LevelIncompleteUI.enabled = true;
+            UIManager.instance.LevelIncompleteUI.enabled = false;
+
+        UIManager.instance.OkButton.SetActive(false);
 
     }
 

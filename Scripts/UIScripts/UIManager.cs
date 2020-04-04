@@ -12,7 +12,7 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI waterCounterText;
 
     [Header("Images")]
-    public Image LevelCompletePanel;
+    public Image LevelPanel;
     public Image GameOverImage;
 
     [Header("HealthUI")]
@@ -21,15 +21,13 @@ public class UIManager : MonoBehaviour
 
     [Header("Buttons")]
     public GameObject RestartButton;
+    public GameObject OkButton;
+    public GameObject NextLevelButton;
 
     [Header("Unity Essentials")]
     public static UIManager instance;
-    private Collectables thisCollectable;
-    public struct Collectables
-    {
-        public int waterDrops;
-        //add here other collectables as per need...:) 
-    }
+
+
     private void Awake()
     {
         if (instance != null)
@@ -40,30 +38,15 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         if (waterCounterText)
-            waterCounterText.text = waterCounterText.text + thisCollectable.waterDrops.ToString();
-        thisCollectable.waterDrops = 0;
+            waterCounterText.text = waterCounterText.text + PlayerInventory.instance.collectableObject.waterDrops.ToString();
+        PlayerInventory.instance.collectableObject.waterDrops = 0;
     }
 
-    public void Level1CompleteCheck()
-    {
-        LevelCompletePanel.enabled = true;
 
-        if (thisCollectable.waterDrops == 5)
-        {
-            LevelCompleteUI.enabled = true;
-            LoadLevelManager.instance.UnlockLevel(2);
-            RestartButton.SetActive(true);
-        }
-        else
-        {
-            LevelIncompleteUI.enabled = true;
-        }
-        PlayerController.instance.gamePaused = true;
-    }
     public void UpdateWaterCounterUI()
     {
-        thisCollectable.waterDrops++;
-        waterCounterText.text = "X" + thisCollectable.waterDrops.ToString();
+        PlayerInventory.instance.collectableObject.waterDrops++;
+        waterCounterText.text = "X" + PlayerInventory.instance.collectableObject.waterDrops.ToString();
     }
 
     public void UpdateHealthUI()
@@ -77,6 +60,22 @@ public class UIManager : MonoBehaviour
         GameOverImage.enabled = true;
         RestartButton.SetActive(true);
     }
+
+    public void UpdateLevelCompleteUI()
+    {
+        LevelPanel.enabled = true;
+        LevelCompleteUI.enabled = true;
+        NextLevelButton.SetActive(true);
+
+    }
+
+    public void UpdateLevelIncompleteUI()
+    {
+        LevelPanel.enabled = true;
+        LevelIncompleteUI.enabled = true;
+        OkButton.SetActive(true);
+    }
+
 
 }
 
