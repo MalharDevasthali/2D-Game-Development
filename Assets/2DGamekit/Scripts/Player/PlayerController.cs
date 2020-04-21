@@ -13,10 +13,6 @@ public class PlayerController : MonoBehaviour
     public AudioClip playerJumpSound;
     public AudioClip playerCrouchSound;
     public AudioClip playerMeeleAttackSound;
-    public AudioClip Something;
-
-
-
 
     [Header("Player Actions")]
     public float walkSpeed;
