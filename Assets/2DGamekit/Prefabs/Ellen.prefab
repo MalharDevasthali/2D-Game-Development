@@ -241,7 +241,7 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 691513047
+  m_SortingLayerID: -888973317
   m_SortingLayer: 3
   m_SortingOrder: 2
   m_Sprite: {fileID: 21300000, guid: c4d7d6470acd7bf45971042161c6e018, type: 3}
@@ -331,6 +331,7 @@ MonoBehaviour:
   playerCrouchSound: {fileID: 8300000, guid: ea217dc637f73b649a2866febb99c4a2, type: 3}
   playerMeeleAttackSound: {fileID: 8300000, guid: 6b428d6a2a5cddd4cb167561aca4ffe7,
     type: 3}
+  Something: {fileID: 0}
   walkSpeed: 5
   runSpeed: 10
   jumpForce: 30
