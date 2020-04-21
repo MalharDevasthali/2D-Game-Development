@@ -13,6 +13,13 @@ public class PlayerInventory : MonoBehaviour
         //add here other collectables as per need...:) 
     }
 
+    public struct Weapons
+    {
+        public bool isStaffUnlocked;
+        public bool isGunUnlocked;
+    }
+
+    public Weapons weapons;
     public Collectables collectableObject;
 
     private void Awake()
@@ -30,10 +37,15 @@ public class PlayerInventory : MonoBehaviour
     {
         collectableObject.waterDrops = 0;
         collectableObject.keys = 0;
+        weapons.isStaffUnlocked = true;
     }
     public int GetWater()
     {
         return collectableObject.waterDrops;
+    }
+    public int GetKeys()
+    {
+        return collectableObject.keys;
     }
 
 

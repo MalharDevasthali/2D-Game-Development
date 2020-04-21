@@ -22,22 +22,16 @@ public class PlayerStats : MonoBehaviour
     {
         currentHeartcount = playerHeartCount;
     }
-    private void Update()
-    {
-        if (currentHeartcount <= 0 && !isDead)
-            PlayerDeath();
-    }
 
     public void DamagePlayer()
     {
-        PlayerController.instance.HurtAnim();
+        PlayerController.instance.Hurt();
         UIManager.instance.UpdateHealthUI();
     }
 
     public void PlayerDeath()
     {
-        //Anims and Vars
-        PlayerController.instance.DeadAnim();
+        PlayerController.instance.Dead();
         isDead = true;
         UIManager.instance.DeathUI();
     }

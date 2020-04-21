@@ -2,39 +2,60 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+using UnityEngine.UI;
 
 public class Level : MonoBehaviour
 {
-    // public struct Conditions
-    // {
-    //     public enum ObjectsToCollect
-    //     {
-    //         waterDrops, keys,
-    //     }
-    //     public ObjectsToCollect[] objects;
-    //     public int Requirements;
-    // }
-    // public Conditions show;
-    public enum ObjectsToCollect
+    [System.Serializable]
+
+    public class Clipping
     {
-        waterDrops, keys
+        public enum Collectables
+        {
+            waterDrops, keys
+        }
+        public Collectables collectableType;
+        public int requirement;
     }
-    public ObjectsToCollect[] objects = new ObjectsToCollect[1];
+    [HideInInspector]
+    public Clipping clipping;
+    private Button thisLevelButton;
 
-    public int waterDropsNeeded;
-    public int keysNeeded;
+    [Header(" Level Info")]
+    [SerializeField] private int thisLevelIndex;
+    [SerializeField] private List<Clipping> WinCondition;
 
+
+    private void Start()
+    {
+        thisLevelButton = this.gameObject.GetComponent<Button>();
+        thisLevelButton.onClick.AddListener(LoadLevel);
+    }
 
     public bool isLevelComplete()
     {
-        if (PlayerInventory.instance.collectableObject.waterDrops >= waterDropsNeeded &&
-           PlayerInventory.instance.collectableObject.keys >= keysNeeded)
-            return true;
-        return false;
-        //if (ObjectsToCollect.waterDrops >= PlayerInventory.instance.GetWater((typeof(ObjectsToCollect.waterDrops))
-        //    return false;
+        for (int i = 0; i < WinCondition.Count; i++)
+        {
+            if (WinCondition[i].collectableType == Clipping.Collectables.waterDrops)
+            {
+                if (PlayerInventory.instance.GetWater() >= WinCondition[i].requirement)
+                    continue;
+                else
+                    return false;
+            }
+            if (WinCondition[i].collectableType == Clipping.Collectables.keys)
+            {
+                if (PlayerInventory.instance.GetKeys() >= WinCondition[i].requirement)
+                    continue;
+                else
+                    return false;
+            }
+        }
+        return true;
     }
 
-
+    private void LoadLevel()
+    {
+        SceneManager.LoadScene(thisLevelIndex);
+    }
 }

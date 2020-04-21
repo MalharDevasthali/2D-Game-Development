@@ -7,12 +7,12 @@ using TMPro;
 public class UIManager : MonoBehaviour
 {
     [Header("Texts")]
-    public TextMeshProUGUI LevelCompleteUI;
-    public TextMeshProUGUI LevelIncompleteUI;
+    public TextMeshProUGUI LevelCompleteText;
+    public TextMeshProUGUI LevelIncompleteText;
     public TextMeshProUGUI waterCounterText;
 
     [Header("Images")]
-    public Image LevelPanel;
+
     public Image GameOverImage;
 
     [Header("HealthUI")]
@@ -26,6 +26,8 @@ public class UIManager : MonoBehaviour
 
     [Header("Unity Essentials")]
     public static UIManager instance;
+    public GameObject PausePanel;
+    public GameObject LevelCompletePanel;
 
 
     private void Awake()
@@ -41,6 +43,16 @@ public class UIManager : MonoBehaviour
             waterCounterText.text = waterCounterText.text + PlayerInventory.instance.collectableObject.waterDrops.ToString();
         PlayerInventory.instance.collectableObject.waterDrops = 0;
     }
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (!PlayerController.instance.gamePaused)
+                PasueTheGame();
+            else
+                ResumeTheGame();
+        }
+    }
 
 
     public void UpdateWaterCounterUI()
@@ -54,6 +66,10 @@ public class UIManager : MonoBehaviour
         PlayerStats.instance.currentHeartcount -= 1;
         HeartToBeDisabled = ListOfHearts[PlayerStats.instance.currentHeartcount];
         HeartToBeDisabled.enabled = false;
+        if (PlayerStats.instance.currentHeartcount <= 0)
+        {
+            PlayerStats.instance.PlayerDeath();
+        }
     }
     public void DeathUI()
     {
@@ -63,19 +79,30 @@ public class UIManager : MonoBehaviour
 
     public void UpdateLevelCompleteUI()
     {
-        LevelPanel.enabled = true;
-        LevelCompleteUI.enabled = true;
+        LevelCompletePanel.SetActive(true);
+        PlayerController.instance.ResetAnimations();
+        PlayerController.instance.gamePaused = true;
+        LevelCompleteText.enabled = true;
         NextLevelButton.SetActive(true);
-
     }
-
     public void UpdateLevelIncompleteUI()
     {
-        LevelPanel.enabled = true;
-        LevelIncompleteUI.enabled = true;
+        LevelCompletePanel.SetActive(true);
+        PlayerController.instance.ResetAnimations();
+        PlayerController.instance.gamePaused = true;
+        LevelIncompleteText.enabled = true;
         OkButton.SetActive(true);
     }
-
+    private void PasueTheGame()
+    {
+        PlayerController.instance.gamePaused = true;
+        PausePanel.SetActive(true);
+    }
+    private void ResumeTheGame()
+    {
+        PlayerController.instance.gamePaused = false;
+        PausePanel.SetActive(false);
+    }
 
 }
 

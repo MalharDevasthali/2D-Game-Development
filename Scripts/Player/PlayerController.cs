@@ -5,39 +5,53 @@ using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("PlayerSounds")]
+    public AudioClip playerWalkingSound;
+    public AudioClip playerRunningSound;
+    public AudioClip playerHurtSound;
+    public AudioClip playerDeadSound;
+    public AudioClip playerJumpSound;
+    public AudioClip playerCrouchSound;
+    public AudioClip playerMeeleAttackSound;
+    public AudioClip Something;
+
+
+
+
     [Header("Player Actions")]
     public float walkSpeed;
     public float runSpeed;
     public float jumpForce;
+    public float attackTime;
     public bool isFacingRight = true;
-    float movement;
+    private float movement;
     public LayerMask Ground;
 
     [Header("Player States")]
-    [SerializeField] bool isGrounded;
-
+    private bool isGrounded;
     public enum AnimState
     {
-        Idle, Walking, Running, JumpingAnim, Crouched, Dead
+        Idle, Walking, Running, Jumping, Crouched, Attacking, Hurt, Dead
     }
-    public AnimState state = AnimState.Idle;
-
+    public AnimState state;
 
     [Header("Unity Essentails")]
-    Rigidbody2D rb2d;
-    Animator animator;
-    float localScaleX;
+    private Rigidbody2D rb2d;
+    private Animator animator;
+    private float localScaleX;
     public Transform groundCheck;
-    public static PlayerController instance;
+    private Coroutine JumpCo, AttackCo;
+    private static PlayerController Instance;
+    public static PlayerController instance { get { return Instance; } }
     [Header("GamePlay")]
-    public bool gamePaused;
+    [HideInInspector] public bool gamePaused;
 
     private void Awake()
     {
-        if (instance != null)
+        if (Instance != null)
             Destroy(gameObject);
         else
-            instance = this;
+            Instance = this;
     }
 
     private void Start()
@@ -45,7 +59,8 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         rb2d = GetComponent<Rigidbody2D>();
         isGrounded = true;
-        state = AnimState.Idle;
+        SetState("isIdle", true, AnimState.Idle);
+
     }
     void Update()
     {
@@ -57,12 +72,15 @@ public class PlayerController : MonoBehaviour
             if (shouldFlipCharacter())
                 flip();
 
-
-            if (state != AnimState.JumpingAnim)
+            if (state != AnimState.Jumping
+            && state != AnimState.Attacking)
             {
-                RunningAnim();
+                if (state != AnimState.Crouched)
+                {
+                    RunningAnim();
 
-                WalkingAnim();
+                    WalkingAnim();
+                }
 
                 JumpingAnim();
 
@@ -70,27 +88,30 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-    public void DeadAnim()
+    public void Dead()
     {
-        animator.SetTrigger("Dead");
+        SetState("isDead", true, AnimState.Dead);
+        SoundManager.instace.PlayAudio(playerDeadSound);
     }
 
-    public void HurtAnim()
+    public void Hurt()
     {
-        animator.SetTrigger("Hurt");
+        SetTrigger("Hurt", AnimState.Hurt);
+        SoundManager.instace.PlayAudio(playerHurtSound);
     }
 
     private void CrouchingAnim()
     {
         if (Input.GetKeyDown(KeyCode.C) && state != AnimState.Crouched)
         {
-            state = AnimState.Crouched;
-            animator.SetBool("isCrouched", true);
+            SetState("isIdle", false, state);
+            SetState("isCrouched", true, AnimState.Crouched);
+            SoundManager.instace.PlayAudio(playerCrouchSound);
         }
         else if (Input.GetKeyDown(KeyCode.C) && state == AnimState.Crouched)
         {
-            state = AnimState.Idle;
-            animator.SetBool("isCrouched", false);
+            ResetAnimations();
+            SetState("isIdle", true, AnimState.Idle);
         }
     }
 
@@ -98,9 +119,9 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space) && state != AnimState.Crouched)
         {
-            if (isGrounded)
+            if (isGrounded && JumpCo == null)
             {
-                StartCoroutine(Jump());
+                JumpCo = StartCoroutine(Jump());
             }
         }
     }
@@ -109,13 +130,15 @@ public class PlayerController : MonoBehaviour
     {
         if (movement != 0 && state != AnimState.Running)
         {
-            animator.SetBool("isWalking", true);
-            state = AnimState.Walking;
+            SetState("isIdle", false, state);
+            SetState("isWalking", true, AnimState.Walking);
+            SoundManager.instace.PlayAudio(playerWalkingSound);
+
         }
         else if (movement == 0)
         {
-            animator.SetBool("isWalking", false);
-            state = AnimState.Idle;
+            SetState("isWalking", false, state);
+            SetState("isIdle", true, AnimState.Idle);
         }
     }
 
@@ -126,40 +149,39 @@ public class PlayerController : MonoBehaviour
 
     private void RunningAnim()
     {
-        #region  Running
         if (movement != 0 && Input.GetKey(KeyCode.LeftShift))
         {
-            if (state != AnimState.Running && state != AnimState.Crouched)
+            if (state != AnimState.Crouched)
             {
-
-                animator.SetBool("isRunning", true);
-                state = AnimState.Running;
+                SetState("isIdle", false, state);
+                SetState("isWalking", false, state);
+                SetState("isRunning", true, AnimState.Running);
+                SoundManager.instace.PlayAudio(playerRunningSound);
             }
         }
         else if (Input.GetKeyUp(KeyCode.LeftShift) || movement == 0)
         {
-
-            animator.SetBool("isRunning", false);
+            SetState("isRunning", false, state);
             if (state != AnimState.Walking && movement != 0 && state != AnimState.Crouched)
-                state = AnimState.Walking;
+                SetState("isWalking", true, AnimState.Walking);
         }
-        #endregion
+
     }
 
     private void FixedUpdate()
     {
         isGrounded = Physics2D.Raycast(groundCheck.position, Vector2.down, 0.1f, Ground);
         if (!gamePaused && !PlayerStats.instance.isDead)
-            WalkRunAnimLogic();
+            WalkRunLogic();
     }
 
-    private void WalkRunAnimLogic()
+    private void WalkRunLogic()
     {
         if (state != AnimState.Crouched)
         {
-            if (state == AnimState.Walking || state == AnimState.JumpingAnim)
+            if (state == AnimState.Walking || state == AnimState.Jumping)
                 rb2d.velocity = new Vector2(movement * walkSpeed, rb2d.velocity.y);
-            else if (state == AnimState.Running || state == AnimState.JumpingAnim)
+            else if (state == AnimState.Running || state == AnimState.Jumping)
                 rb2d.velocity = new Vector2(movement * runSpeed, rb2d.velocity.y);
         }
     }
@@ -167,13 +189,17 @@ public class PlayerController : MonoBehaviour
 
     IEnumerator Jump()
     {
-        state = AnimState.JumpingAnim;
         isGrounded = false;
-        animator.SetTrigger("Jump");
+        SetState("isIdle", false, state);
+        SetTrigger("Jump", AnimState.Jumping);
+
+        SoundManager.instace.PlayAudio(playerJumpSound, true);
+
         rb2d.velocity = new Vector2(rb2d.velocity.x, jumpForce);
         yield return new WaitUntil(() => isGrounded);
         isGrounded = true;
-        state = AnimState.Idle;
+        SetState("isIdle", true, AnimState.Idle);
+        StopJumpCoroutine();
     }
     void flip()
     {
@@ -182,4 +208,60 @@ public class PlayerController : MonoBehaviour
         localScaleX *= -1;
         transform.localScale = new Vector2(localScaleX, transform.localScale.y);
     }
+    public void ResetAnimations()
+    {
+        animator.SetBool("isWalking", false);
+        animator.SetBool("isRunning", false);
+        animator.SetBool("isCrouched", false);
+        animator.SetBool("isDead", false);
+        animator.SetBool("isIdle", false);
+        animator.ResetTrigger("Jump");
+        animator.ResetTrigger("Hurt");
+        animator.ResetTrigger("Staff");
+    }
+    public void Attack()
+    {
+        if (AttackCo == null)
+            AttackCo = StartCoroutine(AttackCoroutine());
+        else return;
+    }
+    private IEnumerator AttackCoroutine()
+    {
+        SetState("isIdle", false, state);
+        SetTrigger("Staff", AnimState.Attacking);
+        SoundManager.instace.PlayAudio(playerMeeleAttackSound, true);
+
+
+        yield return new WaitForSeconds(attackTime);
+        SetState("isIdle", true, AnimState.Idle);
+        StopAttack();
+    }
+    private void StopAttack()
+    {
+        if (AttackCo != null)
+        {
+            StopCoroutine(AttackCo);
+            AttackCo = null;
+        }
+    }
+    private void StopJumpCoroutine()
+    {
+        if (JumpCo != null)
+        {
+            StopCoroutine(JumpCo);
+            JumpCo = null;
+        }
+    }
+
+    private void SetTrigger(string triggerName, AnimState setState)
+    {
+        animator.SetTrigger(triggerName);
+        state = setState;
+    }
+    private void SetState(string boolName, bool boolValue, AnimState setState)
+    {
+        animator.SetBool(boolName, boolValue);
+        state = setState;
+    }
+
 }
